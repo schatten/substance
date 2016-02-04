@@ -25,22 +25,28 @@ AnnotatedTextComponent.Prototype = function() {
     @return {VirtualNode} VirtualNode created using ui/Component
    */
   this.render = function() {
-    var componentRegistry = this.context.componentRegistry;
     var doc = this.getDocument();
     var path = this.getPath();
     var text = doc.get(path) || "";
     var annotations = this.getAnnotations();
-
+    var content = this._renderText(text, annotations);
     var el = $$(this.props.tagName || 'span')
       .addClass('sc-annotated-text')
       .attr({
-        "data-path": this.props.path.join('.'),
+        "data-path": path.join('.'),
         spellCheck: false,
       })
       .css({
         whiteSpace: "pre-wrap"
       });
+    el.append(content.children);
+    return el;
+  };
 
+  this._renderText = function(text, annotations) {
+    var componentRegistry = this.context.componentRegistry;
+    var doc = this.getDocument();
+    var el = $$('span');
     var fragmenter = new Fragmenter();
     var fragmentCounters = {};
     fragmenter.onText = function(context, text) {

@@ -1,4 +1,17 @@
 .sc-text-property {
+
+  position: relative;
+
+  .sm-shadowed {
+    position: absolute;
+    z-index: 1;
+    top: 0;
+    width: 100%;
+    opacity: 0;
+    pointer-events: auto;
+    box-sizing: border-box;
+  }
+
   .se-cursor {
     outline: 1px solid #999;
   }

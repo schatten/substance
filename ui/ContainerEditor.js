@@ -78,9 +78,9 @@ ContainerEditor.Prototype = function() {
     var isEditable = this.isEditable();
     el.addClass('sc-container-editor container-node ' + containerId)
       .attr({
-        spellCheck: false,
-        "data-id": containerId,
-        "contenteditable": isEditable
+        // spellCheck: false,
+        "data-id": containerId
+        // "contenteditable": isEditable
       });
 
     if (this.isEmpty()) {
@@ -150,12 +150,12 @@ ContainerEditor.Prototype = function() {
   this.enable = function() {
     // As opposed to a ContainerEditor, a regular Surface
     // is not a ContentEditable -- but every contained TextProperty
-    this.attr('contentEditable', true);
+    // this.attr('contentEditable', true);
     this.enabled = true;
   };
 
   this.disable = function() {
-    this.removeAttr('contentEditable');
+    // this.removeAttr('contentEditable');
     this.enabled = false;
   };
 
