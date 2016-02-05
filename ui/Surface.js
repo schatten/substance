@@ -288,6 +288,28 @@ Surface.Prototype = function() {
     //   // console.log('Re-rendering DOM selection', sel.toString(), this.__id__);
     //   domSelection.setSelection(sel);
     // }
+    if (!this.isEditable()) {
+      return;
+    }
+    var sel = this.getSelection();
+    if (sel.surfaceId === this.getName()) {
+      if (sel.isNull()) {
+        window.getSelection().removeAllRanges();
+      } else if (sel.isPropertySelection() || sel.isContainerSelection()) {
+        var path, offset;
+        if (sel.isReverse()) {
+          path = sel.endPath;
+          offset = sel.endOffset;
+        } else {
+          path = sel.startPath;
+          offset = sel.startOffset;
+        }
+        var comp = this._textProperties[path];
+        if (comp) {
+          comp._setDOMCursor(offset);
+        }
+      }
+    }
   };
 
   this.getDomNodeForId = function(nodeId) {
@@ -381,7 +403,7 @@ Surface.Prototype = function() {
     this._updateTextProperties(needUpdate);
     // if (this.domSelection) {
     //   // console.log('Rerendering DOM selection after document change.', this.__id__);
-    //   this.rerenderDomSelection();
+      this.rerenderDomSelection();
     // }
     this.emit('selection:changed', this.getSelection());
   };
@@ -391,7 +413,7 @@ Surface.Prototype = function() {
     var needUpdate = this._updateSelectionFragments();
     this._updateTextProperties(needUpdate, true);
     // if (this.domSelection) {
-    //   this.rerenderDomSelection();
+      this.rerenderDomSelection();
     // }
     this.emit('selection:changed', this.getSelection());
   };
@@ -603,7 +625,7 @@ Surface.Prototype = function() {
     //   if (this.skipNextFocusEvent) return;
     //   // console.log('... handling native focus on surface', this.__id__);
     //   if (this.isFocused){
-    //     this.rerenderDomSelection();
+        this.rerenderDomSelection();
     //   } else {
     //     var sel = this.domSelection.getSelection();
     //     this.setFocused(true);
@@ -629,19 +651,12 @@ Surface.Prototype = function() {
     // Note: we need this timeout so that CE updates the DOM selection first
     // before we map the DOM selection
     window.setTimeout(function() {
-      if (self._isDisposed()) return;
+      if (self._isDisposed) return;
 
       var options = {
         direction: (event.keyCode === Surface.Keys.LEFT) ? 'left' : 'right'
       };
       self._updateModelSelection(options);
-      // We could rerender the selection, to make sure the DOM is representing
-      // the model selection
-      // TODO: ATM, the DOMSelection is not good enough in doing this, event.g., there
-      // are situations where one can not use left/right navigation anymore, as
-      // DOMSelection will always decides to choose the initial positition,
-      // which means lockin.
-      // self.rerenderDomSelection();
     });
   };
 
@@ -650,7 +665,7 @@ Surface.Prototype = function() {
     // Note: we need this timeout so that CE updates the DOM selection first
     // before we map the DOM selection
     window.setTimeout(function() {
-      if (self._isDisposed()) return;
+      if (self._isDisposed) return;
       var options = {
         direction: (event.keyCode === Surface.Keys.UP) ? 'left' : 'right'
       };
@@ -658,16 +673,12 @@ Surface.Prototype = function() {
     });
   };
 
-  this._isDisposed = function() {
-    return this._isDisposed;
-  };
-
   this._handleSpaceKey = function(event) {
     event.preventDefault();
     event.stopPropagation();
     this.transaction(function(tx, args) {
       // trying to remove the DOM selection to reduce flickering
-      this.domSelection.clear();
+      // this.domSelection.clear();
       args.text = " ";
       return this.insertText(tx, args);
     }.bind(this));
@@ -708,7 +719,8 @@ Surface.Prototype = function() {
   };
 
   this._updateModelSelection = function(options) {
-    this.setSelection(this.domSelection.getSelection(options));
+    // find
+    // this.setSelection(this.domSelection.getSelection(options));
   };
 
   this._selectProperty = function(path) {

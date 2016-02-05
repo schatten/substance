@@ -59,16 +59,20 @@ TextPropertyComponent.Prototype = function() {
     // for displaying we render with all fragments
     var display = $$(TextContent, {
       text: text,
-      annoations: this.getAnnotationsAndFragments()
+      annotations: this.getAnnotationsAndFragments()
     });
-    display.addClass('sm-displayed').ref('display');
+    display
+      .addClass('sm-displayed')
+      .ref('display')
+      .attr('tabindex', -1);
     el.append(display);
 
     if (this.isEditable()) {
       // for contentEditable without selections
       var editable = $$(TextContent, {
         text: text,
-        annotations: this.getAnnotations()
+        annotations: this.getAnnotations(),
+        editable: true
       });
       editable.addClass('sm-shadowed')
         .attr({ contentEditable: true });
@@ -185,7 +189,6 @@ TextPropertyComponent.Prototype = function() {
   this._getCharPos = function(node, offset) {
     var charPos = offset;
     var parent;
-
     // Cases:
     // 1. node is a text node and has no previous sibling
     // => parent is either the property or an annotation
@@ -195,14 +198,17 @@ TextPropertyComponent.Prototype = function() {
       }
       if (!node.previousSibling) {
         parent = node.parentNode;
-        if (parent.dataset.hasOwnProperty('pos')) {
-          charPos += parent.dataset.pos;
+        if (parent.dataset.hasOwnProperty('offset')) {
+          charPos += parseInt(parent.dataset.offset, 10);
         }
       } else {
        node = node.previousSibling;
        charPos += this._getCharPos(node, -1);
       }
     } else if (node.nodeType === 1 && offset === -1) {
+      if (node.dataset && node.dataset.length) {
+        return parseInt(node.dataset.offset, 10) + parseInt(node.dataset.length, 10);
+      }
       // TODO: compute last charPos
       // i.e. ~ startPos + length of el
       console.error('Case is not supported yet.');
@@ -210,6 +216,67 @@ TextPropertyComponent.Prototype = function() {
       console.error('Case is not supported yet.');
     }
     return charPos;
+  };
+
+  this._getEditableElement = function() {
+    var editable = this.children[1];
+    if (editable) {
+      return editable.el;
+    }
+    return null;
+  };
+
+  this._getDOMCoordinate = function(el, offset, nodeIdx) {
+    var l;
+    var idx = 0;
+    for (var child = el.firstChild; child; child=child.nextSibling, idx++) {
+      if (child.nodeType === 3) {
+        l = child.length;
+        if (l >= offset) {
+          return {
+            container: child,
+            offset: offset
+          };
+        } else {
+          offset -= l;
+        }
+      } else if (child.nodeType === 1) {
+        if (child.dataset && child.dataset.length) {
+          l = parseInt(child.dataset.length, 10);
+          if (l>= offset) {
+            return this._getDOMCoordinate(child, offset, idx);
+          } else {
+            offset -= l;
+          }
+        } else {
+          throw new Error('Case is not supported yet.');
+          // console.log('')
+          // var res = this._getDOMCoordinate(child, offset, idx);
+          // if (res) {
+          //   return res;
+          // }
+        }
+      }
+    }
+  };
+
+  this._setDOMCursor = function(offset) {
+    var contentEl = this._getEditableElement();
+    if (!contentEl) {
+      return;
+    }
+    var coor = this._getDOMCoordinate(contentEl, offset);
+    if (!coor) {
+      return;
+    }
+    var wSel = window.getSelection();
+    var wRange;
+    if (wSel.rangeCount !== 0) {
+      wSel.removeAllRanges();
+    }
+    wRange = window.document.createRange();
+    wRange.setStart(coor.container, coor.offset);
+    wSel.addRange(wRange);
   };
 
 };
@@ -242,11 +309,16 @@ TextContent.Prototype = function() {
       return $$('span').addClass('se-selection-fragment');
     }
     var el = _super._renderFragment.call(this, fragment);
-    if (node.constructor.static.isInline) {
-      el.attr('data-inline', '1');
-      el.attr('contentEditable', false);
+    if (this.props.editable) {
+      if (node.constructor.static.isInline) {
+        el.attr({
+          'contentEditable': false,
+          'data-inline':'1',
+          'data-length': 1
+        });
+      }
+      el.attr('data-offset', fragment.pos);
     }
-    el.attr('data-pos', fragment.pos);
     // adding refs here, enables preservative rerendering
     // TODO: while this solves problems with rerendering inline nodes
     // with external content, it decreases the overall performance too much.
@@ -255,6 +327,13 @@ TextContent.Prototype = function() {
       el.ref(id + "@" + fragment.counter);
     }
     return el;
+  };
+
+  this._finishFragment = function(fragment, context, parentContext) {
+    if (this.props.editable) {
+      context.attr('data-length', fragment.length);
+    }
+    parentContext.append(context);
   };
 
 };
