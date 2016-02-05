@@ -88,7 +88,7 @@ Fragmenter.Prototype = function() {
       var isAnchor = (a.isAnchor ? a.isAnchor() : false);
       // special treatment for zero-width annos such as ContainerAnnotation.Anchors
       if (isAnchor) {
-        openers.push({ pos: a.offset, mode: ANCHOR, id: a.id, level: 0, type: 'anchor', node: a });
+        openers.push({ pos: a.offset, mode: ANCHOR, id: a.id, level: 0, type: 'anchor', node: a, counter:-1 });
       } else {
         // TODO better naming, `Node.static.level` does not say enough
         // Better would be `Node.static.fragmentation = Fragmenter.SHOULD_NOT_SPLIT;`
@@ -110,7 +110,7 @@ Fragmenter.Prototype = function() {
         }
         var startOffset = Math.min(a.startOffset, a.endOffset);
         var endOffset = Math.max(a.startOffset, a.endOffset);
-        var opener = { pos: startOffset, mode: ENTER, level: l, id: a.id, type: a.type, node: a };
+        var opener = { pos: startOffset, mode: ENTER, level: l, id: a.id, type: a.type, node: a, counter:-1};
         openers.push(opener);
         closers.push({ pos: endOffset, mode: EXIT, level: l, id: a.id, type: a.type, node: a, opener: opener});
       }
@@ -184,6 +184,7 @@ Fragmenter.Prototype = function() {
   this.onExit = function(/*entry, context, parentContext*/) {};
 
   this.enter = function(entry, parentContext) {
+    entry.counter++;
     return this.onEnter(entry, parentContext);
   };
 
@@ -198,13 +199,10 @@ Fragmenter.Prototype = function() {
   };
 
   this.start = function(rootContext, text, annotations) {
-    var self = this;
-
     var entries = extractEntries.call(this, annotations);
-
     var stack = [{context: rootContext, entry: null}];
-    var pos = 0;
 
+    var pos = 0;
     for (var i = 0; i < entries.length; i++) {
       var entry = entries[i];
       // in any case we add the last text to the current element
@@ -227,7 +225,7 @@ Fragmenter.Prototype = function() {
         stack.splice(stackLevel, 0, {entry: entry});
         // create new elements for all lower entries
         for (idx = stackLevel; idx < stack.length; idx++) {
-          stack[idx].context = self.enter(stack[idx].entry, stack[idx-1].context);
+          stack[idx].context = this.enter(stack[idx].entry, stack[idx-1].context);
         }
       }
       if (entry.mode === EXIT || entry.mode === ANCHOR) {
@@ -243,7 +241,7 @@ Fragmenter.Prototype = function() {
         stack.splice(stackLevel, 1);
         // create new elements for all lower entries
         for (idx = stackLevel; idx < stack.length; idx++) {
-          stack[idx].context = self.enter(stack[idx].entry, stack[idx-1].context);
+          stack[idx].context = this.enter(stack[idx].entry, stack[idx-1].context);
         }
       }
     }

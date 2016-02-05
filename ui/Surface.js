@@ -38,7 +38,7 @@ function Surface() {
   this.clipboard = new Clipboard(this);
   var doc = this.documentSession.getDocument();
 
-  this.domSelection = null;
+  // this.domSelection = null;
 
   this.onDomMutations = this.onDomMutations.bind(this);
   this.domObserver = new window.MutationObserver(this.onDomMutations);
@@ -77,29 +77,29 @@ Surface.Prototype = function() {
       .attr('spellCheck', false);
 
     if (this.isEditable()) {
-      // Keyboard Events
-      el.on('keydown', this.onKeyDown);
-      // OSX specific handling of dead-keys
-      if (!platform.isIE) {
-        el.on('compositionstart', this.onCompositionStart);
-      }
-      // Note: TextEvent in Chrome/Webkit is the easiest for us
-      // as it contains the actual inserted string.
-      // Though, it is not available in FF and not working properly in IE
-      // where we fall back to a ContentEditable backed implementation.
-      if (window.TextEvent && !platform.isIE) {
-        el.on('textInput', this.onTextInput);
-      } else {
-        el.on('keypress', this.onTextInputShim);
-      }
+      // // Keyboard Events
+      // el.on('keydown', this.onKeyDown);
+      // // OSX specific handling of dead-keys
+      // if (!platform.isIE) {
+      //   el.on('compositionstart', this.onCompositionStart);
+      // }
+      // // Note: TextEvent in Chrome/Webkit is the easiest for us
+      // // as it contains the actual inserted string.
+      // // Though, it is not available in FF and not working properly in IE
+      // // where we fall back to a ContentEditable backed implementation.
+      // if (window.TextEvent && !platform.isIE) {
+      //   el.on('textInput', this.onTextInput);
+      // } else {
+      //   el.on('keypress', this.onTextInputShim);
+      // }
     }
 
     if (!this.isReadonly()) {
-      // Mouse Events
-      el.on('mousedown', this.onMouseDown);
+      // // Mouse Events
+      // el.on('mousedown', this.onMouseDown);
 
-      // disable drag'n'drop
-      el.on('dragstart', this.onDragStart);
+      // // disable drag'n'drop
+      // el.on('dragstart', this.onDragStart);
 
       // we will react on this to render a custom selection
       el.on('focus', this.onNativeFocus);
@@ -113,19 +113,21 @@ Surface.Prototype = function() {
 
   this.didMount = function() {
     if (!this.isReadonly()) {
-      this.domSelection = new DOMSelection(this.el, this.getDocument(), this.getContainer());
+      // this.domSelection = new DOMSelection(this.el, this.getDocument(), this.getContainer());
       this.clipboard.didMount();
       // Document Change Events
       this.domObserver.observe(this.el, this.domObserverConfig);
     }
+    this._isDisposed = false;
   };
 
   this.dispose = function() {
     var doc = this.getDocument();
     doc.disconnect(this);
-    this.domSelection = null;
+    // this.domSelection = null;
     this.domObserver.disconnect();
     this.getController().unregisterSurface(this);
+    this._isDisposed = true;
   };
 
   this.getChildContext = function() {
@@ -273,19 +275,19 @@ Surface.Prototype = function() {
   };
 
   this.setSelectionFromEvent = function(evt) {
-    this.skipNextFocusEvent = true;
-    var domRange = Surface.getDOMRangeFromEvent(evt);
-    var sel = this.domSelection.getSelectionFromDOMRange(domRange);
-    this.setSelection(sel);
+    // this.skipNextFocusEvent = true;
+    // var domRange = Surface.getDOMRangeFromEvent(evt);
+    // var sel = this.domSelection.getSelectionFromDOMRange(domRange);
+    // this.setSelection(sel);
   };
 
   this.rerenderDomSelection = function() {
-    if (this.domSelection) {
-      var domSelection = this.domSelection;
-      var sel = this.getSelection();
-      // console.log('Re-rendering DOM selection', sel.toString(), this.__id__);
-      domSelection.setSelection(sel);
-    }
+    // if (this.domSelection) {
+    //   var domSelection = this.domSelection;
+    //   var sel = this.getSelection();
+    //   // console.log('Re-rendering DOM selection', sel.toString(), this.__id__);
+    //   domSelection.setSelection(sel);
+    // }
   };
 
   this.getDomNodeForId = function(nodeId) {
@@ -377,20 +379,20 @@ Surface.Prototype = function() {
       needUpdate[path] = true;
     });
     this._updateTextProperties(needUpdate);
-    if (this.domSelection) {
-      // console.log('Rerendering DOM selection after document change.', this.__id__);
-      this.rerenderDomSelection();
-    }
+    // if (this.domSelection) {
+    //   // console.log('Rerendering DOM selection after document change.', this.__id__);
+    //   this.rerenderDomSelection();
+    // }
     this.emit('selection:changed', this.getSelection());
   };
 
   this.onSelectionChange = function() {
     // console.log('Rerendering DOM selection after selection change.');
     var needUpdate = this._updateSelectionFragments();
-    this._updateTextProperties(needUpdate);
-    if (this.domSelection) {
-      this.rerenderDomSelection();
-    }
+    this._updateTextProperties(needUpdate, true);
+    // if (this.domSelection) {
+    //   this.rerenderDomSelection();
+    // }
     this.emit('selection:changed', this.getSelection());
   };
 
@@ -470,7 +472,7 @@ Surface.Prototype = function() {
     this.skipNextObservation=true;
     this.transaction(function(tx, args) {
       // trying to remove the DOM selection to reduce flickering
-      this.domSelection.clear();
+      // this.domSelection.clear();
       args.text = event.data;
       return this.insertText(tx, args);
     }.bind(this));
@@ -502,7 +504,7 @@ Surface.Prototype = function() {
     if (character.length>0) {
       this.transaction(function(tx, args) {
         // trying to remove the DOM selection to reduce flickering
-        this.domSelection.clear();
+        // this.domSelection.clear();
         args.text = character;
         return this.insertText(tx, args);
       }.bind(this));
@@ -553,12 +555,12 @@ Surface.Prototype = function() {
     // into an existing selection. In this case the window selection still
     // holds the old value, and is set to the correct selection after this
     // being called.
-    setTimeout(function() {
-      if (this.domSelection) {
-        var sel = this.domSelection.getSelection();
-        this.setSelection(sel);
-      }
-    }.bind(this));
+    // setTimeout(function() {
+    //   if (this.domSelection) {
+    //     var sel = this.domSelection.getSelection();
+    //     this.setSelection(sel);
+    //   }
+    // }.bind(this));
   };
 
   this.onDomMutations = function() {
@@ -657,8 +659,7 @@ Surface.Prototype = function() {
   };
 
   this._isDisposed = function() {
-    // HACK: if domSelection === null, this surface has been disposed
-    return !this.domSelection;
+    return this._isDisposed;
   };
 
   this._handleSpaceKey = function(event) {
@@ -850,11 +851,15 @@ Surface.Prototype = function() {
     return needUpdate;
   };
 
-  this._updateTextProperties = function(needUpdate) {
+  this._updateTextProperties = function(needUpdate, fragmentsOnly) {
     each(needUpdate, function(_, pathStr) {
       var comp = this._textProperties[pathStr];
       if (comp) {
-        comp.rerender();
+        if (fragmentsOnly) {
+          comp.setFragments(this._getFragments(pathStr));
+        } else {
+          comp.rerender();
+        }
       }
     }.bind(this));
   };

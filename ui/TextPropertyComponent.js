@@ -1,15 +1,20 @@
+/* jshint latedef:nofunc */
 'use strict';
 
+var platform = require('../util/platform');
 var AnnotatedTextComponent = require('./AnnotatedTextComponent');
 var Component = require('./Component');
 var $$ = Component.$$;
 
+var Coordinate = require('../model/Coordinate');
+var PropertySelection = require('../model/PropertySelection');
+
 /**
-  Renders a text property. Used internally by different components (e.g. ui/TextPropertyEditor)
+  Renders a text property. Used internally by different components to render editable text.
 
   @class
   @component
-  @extends ui/Component
+  @extends ui/AnnotatedTextComponent
 
   @prop {String[]} path path to a text property
   @prop {String} [tagName] specifies which tag should be used - defaults to `div`
@@ -31,6 +36,66 @@ TextPropertyComponent.Prototype = function() {
 
   var _super = Object.getPrototypeOf(this);
 
+  this.render = function() {
+    var path = this.props.path;
+
+    // var el = $$(this.props.tagName || 'span')
+    var el = $$('div')
+      .addClass('sc-text-property')
+      .attr({
+        "data-path": path.join('.'),
+        spellCheck: false,
+      })
+      .css({
+        whiteSpace: "pre-wrap"
+      });
+
+    // Note: inspired by Slack's editor we render the content twice
+    // once with selections as a display, and once for selections and events
+    // as an invisible ContentEditable
+
+    var text = this.getText();
+
+    // for displaying we render with all fragments
+    var display = $$(TextContent, {
+      text: text,
+      annoations: this.getAnnotationsAndFragments()
+    });
+    display.addClass('sm-displayed').ref('display');
+    el.append(display);
+
+    if (this.isEditable()) {
+      // for contentEditable without selections
+      var editable = $$(TextContent, {
+        text: text,
+        annotations: this.getAnnotations()
+      });
+      editable.addClass('sm-shadowed')
+        .attr({ contentEditable: true });
+      // Keyboard Events
+      editable.on('keydown', this.onKeyDown);
+      // OSX specific handling of dead-keys
+      if (!platform.isIE) {
+        editable.on('compositionstart', this.onCompositionStart);
+      }
+      // Note: TextEvent in Chrome/Webkit is the easiest for us
+      // as it contains the actual inserted string.
+      // Though, it is not available in FF and not working properly in IE
+      // where we fall back to a ContentEditable backed implementation.
+      if (window.TextEvent && !platform.isIE) {
+        editable.on('textInput', this.onTextInput);
+      } else {
+        editable.on('keypress', this.onKeyPress);
+      }
+
+      // Mouse Events
+      editable.on('mousedown', this.onMouseDown);
+      el.append(editable);
+    }
+
+    return el;
+  };
+
   this.didMount = function() {
     var surface = this.getSurface();
     if (surface) {
@@ -46,49 +111,16 @@ TextPropertyComponent.Prototype = function() {
     }
   };
 
-  this.render = function() {
-    // TODO: we want to render the content twice
-    // once with selections
-    // and once into an invisible representation which is used by the
-    // for ContentEditable
-
-    var doc = this.getDocument();
-    var path = this.getPath();
-    var text = doc.get(path) || "";
-
-    var content1 = this._renderText(text, this.getAnnotations());
-    content1.addClass('sm-displayed');
-    var content2 = this._renderText(text, this.getAnnotations(true));
-    content2.addClass('sm-shadowed')
-      .attr({
-        contentEditable: true
-      });
-
-    var annotations = this.getAnnotations('withFragments');
-    var content = this._renderText(text, annotations);
-
-    // var el = $$(this.props.tagName || 'span')
-    var el = $$('div')
-      .addClass('sc-text-property')
-      .attr({
-        "data-path": path.join('.'),
-        spellCheck: false,
-      })
-      .css({
-        whiteSpace: "pre-wrap"
-      });
-    el.append(content1);
-    el.append(content2);
-    return el;
+  this.getText = function() {
+    return this.getDocument().get(this.props.path);
   };
 
+  this.getAnnotations = function() {
+    return this.getDocument().getIndex('annotations').get(this.props.path);
+  };
 
-  this.getAnnotations = function(withoutFragments) {
-    var doc = this.getDocument();
-    var annotations = doc.getIndex('annotations').get(this.props.path);
-    if (withoutFragments) {
-      return annotations;
-    }
+  this.getAnnotationsAndFragments = function() {
+    var annotations = this.getAnnotations();
     var fragments = this.getSurface()._getFragments(this.props.path);
     if (fragments) {
       annotations = annotations.concat(fragments);
@@ -96,27 +128,137 @@ TextPropertyComponent.Prototype = function() {
     return annotations;
   };
 
-  this.getContainer = function() {
-    return this.getSurface().getContainer();
-  };
-
-  this.getController = function() {
-    return this.context.controller;
+  this.setFragments = function() {
+    this.children[0].extendProps({ annotations: this.getAnnotationsAndFragments() });
   };
 
   this.getDocument = function() {
-    return this.context.doc;
+    return this.props.doc ||this.context.doc;
   };
 
-  this.getElement = function() {
-    return this.$el[0];
+  this.getController = function() {
+    return this.props.controller || this.context.controller;
   };
 
   this.getSurface = function() {
-    return this.context.surface;
+    return this.props.surface ||this.context.surface;
   };
+
+  this.isEditable = function() {
+    return this.getSurface().isEditable();
+  };
+
+  this.isReadonly = function() {
+    return this.getSurface().isReadonly();
+  };
+
+  this.onKeyDown = function(event) {
+    this.getSurface().onKeyDown(event);
+  };
+
+  this.onKeyPress = function(event) {
+    this.getSurface().onTextInputShim(event);
+  };
+
+  this.onTextInput = function(event) {
+    this.getSurface().onTextInput(event);
+  };
+
+  this.onCompositionStart = function(event) {
+    this.getSurface().onCompositionStart(event);
+  };
+
+  this.onMouseDown = function() {
+    setTimeout(function() {
+      var range = window.getSelection().getRangeAt(0);
+      var path = this.props.path;
+      var pos = this._getCharPos(range.startContainer, range.startOffset);
+      var coor = new Coordinate(path, pos);
+      var sel = new PropertySelection(coor);
+      console.log('TextPropertyComponent.onMouseDown(): sel=', sel);
+      this.getSurface().setSelection(sel);
+    }.bind(this));
+  };
+
+  // DOM selection mapping
+
+  this._getCharPos = function(node, offset) {
+    var charPos = offset;
+    var parent;
+
+    // Cases:
+    // 1. node is a text node and has no previous sibling
+    // => parent is either the property or an annotation
+    if (node.nodeType === 3) {
+      if (offset === -1) {
+        charPos = node.length;
+      }
+      if (!node.previousSibling) {
+        parent = node.parentNode;
+        if (parent.dataset.hasOwnProperty('pos')) {
+          charPos += parent.dataset.pos;
+        }
+      } else {
+       node = node.previousSibling;
+       charPos += this._getCharPos(node, -1);
+      }
+    } else if (node.nodeType === 1 && offset === -1) {
+      // TODO: compute last charPos
+      // i.e. ~ startPos + length of el
+      console.error('Case is not supported yet.');
+    } else {
+      console.error('Case is not supported yet.');
+    }
+    return charPos;
+  };
+
 };
 
-AnnotatedTextComponent.extend(TextPropertyComponent);
+Component.extend(TextPropertyComponent);
+
+function TextContent() {
+  TextContent.super.apply(this, arguments);
+}
+
+TextContent.Prototype = function() {
+
+  var _super = Object.getPrototypeOf(this);
+
+  this.render = function() {
+    var el = this._renderContent()
+      .css({
+        whiteSpace: "pre-wrap"
+      });
+    el.append($$('br'));
+    return el;
+  };
+
+  this._renderFragment = function(fragment) {
+    var node = fragment.node;
+    var id = node.id;
+    if (node.type === 'cursor') {
+      return $$('span').addClass('se-cursor');
+    } else if (node.type === 'selection-fragment') {
+      return $$('span').addClass('se-selection-fragment');
+    }
+    var el = _super._renderFragment.call(this, fragment);
+    if (node.constructor.static.isInline) {
+      el.attr('data-inline', '1');
+      el.attr('contentEditable', false);
+    }
+    el.attr('data-pos', fragment.pos);
+    // adding refs here, enables preservative rerendering
+    // TODO: while this solves problems with rerendering inline nodes
+    // with external content, it decreases the overall performance too much.
+    // We should optimize the component first before we can enable this.
+    if (this.context.config && this.context.config.preservativeTextPropertyRendering) {
+      el.ref(id + "@" + fragment.counter);
+    }
+    return el;
+  };
+
+};
+
+AnnotatedTextComponent.extend(TextContent);
 
 module.exports = TextPropertyComponent;

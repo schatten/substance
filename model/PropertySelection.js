@@ -24,36 +24,43 @@ var Range = require('./Range');
 
 
 */
-function PropertySelection(properties) {
+function PropertySelection(start, end, reverse) {
   PropertySelection.super.apply(this);
 
-  /**
-    The path to the selected property.
-    @type {String[]}
-  */
-  var path = properties.path;
-  /**
-    Start character position.
-    @type {Number}
-  */
-  var startOffset = properties.startOffset;
-  /**
-    End character position.
-    @type {Number}
-  */
-  var endOffset = properties.endOffset || properties.startOffset;
+  if (arguments[0] instanceof Coordinate) {
+    end = end || start;
+    this.range = new Range(start, end);
+    this.reverse = !!reverse;
+  } else if (arguments.length === 1) {
+    var properties = arguments[0];
+    /**
+      The path to the selected property.
+      @type {String[]}
+    */
+    var path = properties.path;
+    /**
+      Start character position.
+      @type {Number}
+    */
+    var startOffset = properties.startOffset;
+    /**
+      End character position.
+      @type {Number}
+    */
+    var endOffset = properties.endOffset || properties.startOffset;
 
-  if (!path || !isNumber(startOffset)) {
-    throw new Error('Invalid arguments: `path` and `startOffset` are mandatory');
+    if (!path || !isNumber(startOffset)) {
+      throw new Error('Invalid arguments: `path` and `startOffset` are mandatory');
+    }
+
+    this.range = new Range(
+      new Coordinate(path, startOffset),
+      new Coordinate(path, endOffset)
+    );
+    this.reverse = properties.reverse;
+
+    this.surfaceId = properties.surfaceId;
   }
-
-  this.range = new Range(
-    new Coordinate(path, startOffset),
-    new Coordinate(path, endOffset)
-  );
-  this.reverse = properties.reverse;
-
-  this.surfaceId = properties.surfaceId;
 
   this._internal = {};
 }
