@@ -163,7 +163,7 @@ DocumentNode.extend(Container, ParentNodeMixin, function() {
     var node = this._getNodeForAddress(address);
     var properties = node.getAddressablePropertyNames();
     if (properties.length === 0) {
-      return null;
+      return [node.id];
     }
     var propertyName = properties[last(address)];
     if (!propertyName) {
@@ -385,7 +385,16 @@ DocumentNode.extend(Container, ParentNodeMixin, function() {
     var startAddress = this.getAddress(startPath);
     var endAddress = this.getAddress(endPath);
     var addresses = this.getAddressRange(startAddress, endAddress);
-    return addresses.map(this.getPathForAddress.bind(this));
+    var paths = [];
+    if (addresses.length > 0) {
+      addresses.forEach(function(address) {
+        var path = this.getPathForAddress(address);
+        if (path) {
+          paths.push(path);
+        }
+      }.bind(this));
+    }
+    return paths;
   };
 
   this.getNextPath = function(path) {

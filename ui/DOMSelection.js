@@ -1,7 +1,6 @@
 /* jshint latedef:nofunc */
 'use strict';
 
-var $ = require('../util/jquery');
 var oo = require('../util/oo');
 var Coordinate = require('../model/Coordinate');
 var Range = require('../model/Range');
@@ -130,10 +129,10 @@ DOMSelection.Prototype = function() {
     }
     // HACK: special treatment for edge cases as addressed by #354.
     // Sometimes anchorNode and focusNodes are the surface
-    if ($(wSel.anchorNode).is('.surface')) {
+    else if (wSel.anchorNode === this.surface.el) {
       range = this._getEnclosingRange(wSel.getRangeAt(0));
     } else {
-      range = this._getRange(wSel.anchorNode, wSel.anchorOffset, wSel.focusNode, wSel.focusOffset);
+      range = this._getRange(wSel.anchorNode, wSel.anchorOffset, wSel.focusNode, wSel.focusOffset, options);
     }
     // console.log('### extracted range from DOM', range.toString());
     return range;
@@ -163,13 +162,13 @@ DOMSelection.Prototype = function() {
     @param {number} focusOffset
     @returns {model/Range}
   */
-  this._getRange = function(anchorNode, anchorOffset, focusNode, focusOffset) {
+  this._getRange = function(anchorNode, anchorOffset, focusNode, focusOffset, options) {
     var start = this._getCoordinate(anchorNode, anchorOffset);
     var end;
     if (anchorNode === focusNode && anchorOffset === focusOffset) {
       end = start;
     } else {
-      end = this._getCoordinate(focusNode, focusOffset);
+      end = this._getCoordinate(focusNode, focusOffset, options);
     }
     var isReverse = _isReverse(anchorNode, anchorOffset, focusNode, focusOffset);
     if (start && end) {
@@ -217,7 +216,11 @@ DOMSelection.Prototype = function() {
     // and after that covering known edge cases
     var coor = TextPropertyComponent.getCoordinate(this.surface.el, node, offset);
     if (!coor) {
-      coor = this._searchForCoordinate(node, offset, options);
+      if (node === this.surface.el) {
+        coor = this._searchForCoordinate2(node, offset, options);
+      } else {
+        coor = this._searchForCoordinate(node, offset, options);
+      }
     }
     return coor;
   };
@@ -283,6 +286,44 @@ DOMSelection.Prototype = function() {
     }
     return new Coordinate(path, charPos);
   };
+
+  this._searchForCoordinate2 = function(node, offset, options) {
+    while (node !== this.surface.el) {
+      console.error('FIXME: this fallback is note implemented for the given case.', node, offset);
+      return null;
+    }
+    var direction = "right";
+    if (options && options.direction) {
+      direction = options.direction;
+    }
+    var wRange = document.createRange();
+    var frag, props;
+    var path, charPos;
+    var doc = this.surface.getDocument();
+    if (offset > 0 && direction === "left") {
+      wRange.setStart(node, 0);
+      wRange.setEnd(node, offset);
+      frag = wRange.cloneContents();
+      props = frag.querySelectorAll('*[data-path]');
+      if (props.length > 0) {
+        path = _getPath(props[props.length-1]);
+        charPos = doc.get(path).length;
+        return new Coordinate(path, charPos);
+      }
+    }
+    // in other cases, or if the left search strategy did not succeed
+    // search the remainder of the node
+    wRange.setStart(node, offset);
+    wRange.setEnd(node, node.childNodes.length);
+    frag = wRange.cloneContents();
+    props = frag.querySelectorAll('*[data-path]');
+    if (props.length > 0) {
+      path = _getPath(props[0]);
+      return new Coordinate(path, 0);
+    }
+    return null;
+  };
+
 
   /*
     Computes a model range that encloses all properties

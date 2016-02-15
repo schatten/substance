@@ -184,12 +184,19 @@ function _pasteDocument(tx, args) {
 
   // set a new selection
   var lastPath = container.getLastPath(last(insertedNodes));
-  var lastLength = tx.get(lastPath).length;
-  selection = tx.createSelection({
-    type: 'property',
-    path: lastPath,
-    startOffset: lastLength
-  });
+  // HACK: the second check is necessary to make sure
+  // that the provided path is actually a property path
+  // FIXME: with nodes without properties we need at least
+  // provide something, i.e. we return [node.id] when
+  // producing a
+  if (lastPath && lastPath.length>1) {
+    var lastLength = tx.get(lastPath).length;
+    selection = tx.createSelection({
+      type: 'property',
+      path: lastPath,
+      startOffset: lastLength
+    });
+  }
   args.selection = selection;
   return args;
 }

@@ -315,7 +315,7 @@ QUnit.uiTest("Issue #273: 'Could not find char position' when clicking right abo
 });
 
 var surfaceWithParagraphs = [
-  '<div id="surface" class="surface">',
+  '<div id="surface">',
     '<p id="p1">',
       '<span data-path="p1.content">AA</span>',
     '</p>',
@@ -381,4 +381,15 @@ QUnit.uiTest("Mapping a ContainerSelection from DOM to model", function(assert) 
   assert.equal(sel.startOffset, 1, 'startOffset should be correct.');
   assert.deepEqual(sel.endPath, ['p2', 'content'], 'endPath should be correct.');
   assert.equal(sel.endOffset, 2, 'endOffset should be correct.');
+});
+
+QUnit.uiTest("DOM Coordinate on surface element", function(assert) {
+  var el = $('#qunit-fixture').html(surfaceWithParagraphs)[0];
+  var domSelection = new DOMSelection(new StubSurface(el, 'main'));
+  var surface = el.querySelector('#surface');
+  QUnit.setDOMSelection(surface, 2, surface, 2);
+  var sel = domSelection.getSelection(sel);
+  assert.ok(sel.isCollapsed, 'Selection should be collapsed.');
+  assert.deepEqual(sel.startPath, ['p3', 'content'], 'startPath should be correct.');
+  assert.equal(sel.startOffset, 0, 'startOffset should be correct.');
 });

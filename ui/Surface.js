@@ -245,11 +245,13 @@ Surface.Prototype = function() {
   this.transaction = function(transformation) {
     var documentSession = this.documentSession;
     var surfaceId = this.getName();
+    var self = this;
     // using the silent version, so that the selection:changed event does not get emitted too early
     documentSession.transaction(function(tx, args) {
       // `beforeState` is saved with the document operation and will be used
       // to recover the selection when using 'undo'.
       tx.before.surfaceId = surfaceId;
+      self._prepareArgs(args);
       return transformation(tx, args);
     });
   };
@@ -915,6 +917,16 @@ Surface.Prototype = function() {
       doc: doc,
       node: node
     });
+  };
+
+  /*
+    Called when starting a transaction to populate the transaction
+    arguments.
+
+    ATM used only by ContainerEditor.
+  */
+  this._prepareArgs = function(args) {
+    /* jshint unused: false */
   };
 
 };

@@ -84,7 +84,7 @@ Schema.Prototype = function() {
     @returns {Node[]} An array of Node classes.
   */
   this.getBuiltIns = function() {
-    return [ Node ];
+    return [];
   };
 
   /**
