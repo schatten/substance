@@ -1,7 +1,9 @@
 'use strict';
 
+var isArray = require('lodash/isArray');
 var each = require('lodash/each');
 var extend = require('lodash/extend');
+var merge = require('lodash/merge');
 var Component = require('./Component');
 var ToolManager = require('./ToolManager');
 var Registry = require('../util/Registry');
@@ -162,14 +164,27 @@ Controller.Prototype = function() {
     return {};
   };
 
+  function _concatArrays(objValue, srcValue) {
+    if (isArray(objValue)) {
+      return objValue.concat(srcValue);
+    }
+  }
+
   // Use static config if available, otherwise try to fetch it from props
   this.getConfig = function() {
-    return this.constructor.static.config || this.props.config || {
+    var config = {
       controller: {
-        components: [],
+        components: {},
         commands: []
       }
     };
+    if (this.constructor.static.config) {
+      merge(config, this.constructor.static.config, _concatArrays);
+    }
+    if (this.props.config) {
+      merge(config, this.props.config, _concatArrays);
+    }
+    return config;
   };
 
   this.willReceiveProps = function(newProps) {
@@ -583,4 +598,5 @@ Controller.Prototype = function() {
 */
 
 Component.extend(Controller);
+
 module.exports = Controller;
