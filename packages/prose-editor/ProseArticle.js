@@ -4,6 +4,7 @@ var Document = require('../../model/Document');
 var DocumentSchema = require('../../model/DocumentSchema');
 
 var schema = new DocumentSchema('prose-article', '1.0.0');
+
 schema.getDefaultTextType = function() {
   return 'paragraph';
 };
@@ -17,6 +18,10 @@ schema.addNodes([
   require('../emphasis/Emphasis'),
   require('../strong/Strong'),
   require('../link/Link'),
+  require('../table/Table'),
+  require('../table/TableSection'),
+  require('../table/TableRow'),
+  require('../table/TableCell')
 ]);
 
 var Article = function() {
