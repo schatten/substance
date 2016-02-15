@@ -7,6 +7,7 @@
   // border: 1px solid #eee;
   border-collapse: collapse;
   table-layout: fixed;
+
   -moz-user-select: none;
   -khtml-user-select: none;
   -webkit-user-select: none;
@@ -15,6 +16,7 @@
 
 .table th, .table td {
   border: 1px solid #efefef;
+  height: 20px;
 }
 
 .table th {
@@ -25,12 +27,4 @@
 
 .table td {
   padding: 2px 5px;
-}
-
-.table .selected {
-  background-color: cyan;
-}
-
-.table.table-editing-mode .text-property {
-  cursor: default;
 }
