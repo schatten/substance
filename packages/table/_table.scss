@@ -7,6 +7,10 @@
   // border: 1px solid #eee;
   border-collapse: collapse;
   table-layout: fixed;
+  -moz-user-select: none;
+  -khtml-user-select: none;
+  -webkit-user-select: none;
+  -o-user-select: none;
 }
 
 .table th, .table td {

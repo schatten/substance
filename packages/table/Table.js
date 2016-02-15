@@ -1,7 +1,8 @@
 'use strict';
 
-var oo = require('../../util/oo');
+var isArray = require('lodash/isArray');
 var extend = require('lodash/extend');
+var oo = require('../../util/oo');
 var BlockNode = require('../../model/BlockNode');
 var ParentNodeMixin = require('../../model/ParentNodeMixin');
 var TableMatrix = require('./TableMatrix');
@@ -17,6 +18,10 @@ function Table() {
 Table.Prototype = function () {
 
   extend(this, ParentNodeMixin);
+
+  this.hasChildren = function() {
+    return false;
+  };
 
   this.getChildrenProperty = function() {
     return 'sections';
@@ -126,6 +131,132 @@ Table.fromTSV = function(tx, tsv, sep) {
     id: tableId,
     sections: [section.id]
   });
+};
+
+Table.create = function(tx, options) {
+  options = options || {};
+  var addHeader = options.header || false;
+  var vals, rowVals;
+  var nrows, ncols;
+  if (isArray(options.vals) && options.vals.length > 0) {
+    vals = options.vals;
+    nrows = vals.length;
+    ncols = vals[0].length;
+  } else {
+    vals = [];
+    nrows = options.rows || 5;
+    ncols = options.cols || 10;
+  }
+
+  var tableData, sectionData, rowData, cellData;
+  var tableId, sectionId, rowId, cellId;
+  var cellStr;
+  var i,j;
+
+  tableId = uuid('table');
+  tableData = {
+    type: 'table',
+    id: tableId,
+    sections: []
+  };
+
+  if (addHeader) {
+    if (vals.length > 0) {
+      rowVals = vals.shift();
+      nrows--;
+    } else {
+      rowVals = [];
+    }
+    sectionId = tableId+'-head';
+    sectionData = {
+      type: 'table-section',
+      id: sectionId,
+      sectionType: 'thead',
+      rows: [],
+      parent: tableId,
+    };
+    rowId = sectionId + '-row';
+    rowData = {
+      type: 'table-row',
+      id: rowId,
+      cells: [],
+      parent: sectionId,
+    };
+    sectionData.rows.push(rowId);
+    for (j = 0; j < ncols; j++) {
+      cellStr = rowVals[j] || Table.getIdForCoordinate(0, j+1);
+      cellId = rowId + 'col' + j;
+      cellData = {
+        type: 'table-cell',
+        id: cellId,
+        cellType: 'th',
+        content: cellStr,
+        parent: rowId,
+      };
+      tx.create(cellData);
+      rowData.cells.push(cellId);
+    }
+    tx.create(rowData);
+    tx.create(sectionData);
+    tableData.sections.push(sectionId);
+  }
+
+  // body section
+  sectionId = tableId+'-body';
+  sectionData = {
+    type: 'table-section',
+    id: sectionId,
+    sectionType: 'tbody',
+    rows: [],
+    parent: tableId,
+  };
+  for (i = 0; i < nrows; i++) {
+    if (vals.length > 0) {
+      rowVals = vals.shift();
+      nrows--;
+    } else {
+      rowVals = [];
+    }
+    rowId = sectionId + '-row'+i;
+    rowData = {
+      type: 'table-row',
+      id: rowId,
+      cells: [],
+      parent: sectionId,
+    };
+    for (j = 0; j < ncols; j++) {
+      cellStr = rowVals[j] || '';
+      cellId = rowId + '-col' + j;
+      cellData = {
+        type: 'table-cell',
+        id: cellId,
+        cellType: 'td',
+        content: cellStr,
+        parent: rowId,
+      };
+      tx.create(cellData);
+      rowData.cells.push(cellId);
+    }
+    tx.create(rowData);
+    sectionData.rows.push(rowId);
+  }
+  tx.create(sectionData);
+  tableData.sections.push(sectionId);
+
+  return tx.create(tableData);
+};
+
+Table.getIdForCoordinate = function(row, col) {
+  var chars = [];
+  while (col > 0) {
+    chars.unshift(String.fromCharCode(65 + (col-1)%26));
+    col = Math.floor((col-1)/26);
+  }
+  if (row > 0) {
+    return chars.join('') + row;
+  } else {
+    return chars.join('');
+  }
 };
 
 module.exports = Table;
