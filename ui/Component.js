@@ -869,6 +869,7 @@ Component.Prototype = function ComponentPrototype() {
     each(data.handlers, function(handlerSpec, eventName) {
       this._bindHandler($el[0], data._owner, eventName, handlerSpec);
     }.bind(this));
+    $el[0].component = this;
     return $el;
   };
 
