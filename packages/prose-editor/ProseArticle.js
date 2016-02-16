@@ -18,10 +18,7 @@ schema.addNodes([
   require('../emphasis/Emphasis'),
   require('../strong/Strong'),
   require('../link/Link'),
-  require('../table/Table'),
-  require('../table/TableSection'),
-  require('../table/TableRow'),
-  require('../table/TableCell')
+  require('../table/Table')
 ]);
 
 var Article = function() {

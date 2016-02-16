@@ -11,9 +11,6 @@ var Emphasis = require('../../packages/emphasis/Emphasis');
 var Strong = require('../../packages/strong/Strong');
 var Link = require('../../packages/link/Link');
 var Table = require('../../packages/table/Table');
-var TableSection = require('../../packages/table/TableSection');
-var TableRow = require('../../packages/table/TableRow');
-var TableCell = require('../../packages/table/TableCell');
 var List = require('../../packages/list/List');
 var ListItem = require('../../packages/list/ListItem');
 var Image = require('../../packages/image/Image');
@@ -31,7 +28,7 @@ schema.addNodes([
   Emphasis,
   Strong,
   Link,
-  Table, TableSection, TableRow, TableCell,
+  Table,
   List, ListItem,
   Image,
   TestNode,

@@ -28,16 +28,10 @@ module.exports = function() {
   main.show('list1');
   article.create({ type: 'paragraph', id: 'p4', content: '0123456789' });
   main.show('p4');
-  article.create({ type: 'table-cell', id: 'td1', parent: 'tr1', content: '0123456789' });
-  article.create({ type: 'table-cell', id: 'td2', parent: 'tr1', content: '0123456789' });
-  article.create({ type: 'table-cell', id: 'td3', parent: 'tr1', content: '0123456789' });
-  article.create({ type: 'table-row', id: 'tr1', parent: 'tsec1', cells: ['td1', 'td2', 'td3'] });
-  article.create({ type: 'table-cell', id: 'td4', parent: 'tr2', content: '0123456789' });
-  article.create({ type: 'table-cell', id: 'td5', parent: 'tr2', content: '0123456789' });
-  article.create({ type: 'table-cell', id: 'td6', parent: 'tr2', content: '0123456789' });
-  article.create({ type: 'table-row', id: 'tr2', parent: 'tsec1', cells: ['td4', 'td5', 'td6'] });
-  article.create({ type: 'table-section', id: 'tsec1', parent: 'table1', rows: ['tr1', 'tr2'] });
-  article.create({ type: 'table', id: 'table1', sections: ['tsec1'] });
+  article.create({ type: 'table', id: 'table1', cells: [
+    ['A', 'B', 'C'],
+    [1, 2, 3]
+  ] });
   main.show('table1');
   article.create({ type: 'paragraph', id: 'p5', content: '0123456789' });
   main.show('p5');

@@ -27,6 +27,18 @@ Table.Prototype = function () {
     }
   };
 
+  this.toTSV = function() {
+    var lines = this.cells.map(function(row) {
+      return row.map(function(cell) {
+        if (!cell) {
+          cell = "";
+        }
+        return cell;
+      }).join('\t');
+    });
+    return lines.join('\n');
+  };
+
 };
 
 oo.inherit(Table, BlockNode);
@@ -43,8 +55,8 @@ Table.create = function(tx, options) {
     type: 'table',
     cells: []
   };
-  if (isArray(options.vals)) {
-    tableData.cells = cloneDeep(options.vals);
+  if (isArray(options.values)) {
+    tableData.cells = cloneDeep(options.values);
   } else {
     var nrows = options.rows || 5;
     var ncols = options.cols || 10;
@@ -66,6 +78,17 @@ Table.getIdForCoordinate = function(row, col) {
   } else {
     return chars.join('');
   }
+};
+
+Table.fromTSV = function(tx, tsv, sep) {
+  sep = sep || '\t';
+  var lines = tsv.split(/\n/);
+  var matrix = lines.map(function(line) {
+    return line.split(sep);
+  });
+  return Table.create(tx, {
+    values: matrix
+  });
 };
 
 module.exports = Table;
