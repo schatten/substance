@@ -13,6 +13,7 @@ var DOMSelection = require('./DOMSelection');
 var Clipboard = require('./Clipboard');
 var Component = require('./Component');
 var UnsupportedNode = require('./UnsupportedNode');
+var Commander = require('./Commander');
 var keys = require('../util/keys');
 var inBrowser = require('../util/inBrowser');
 var DefaultDOMElement = require('./DefaultDOMElement');
@@ -47,6 +48,9 @@ function Surface() {
   this.domObserver = new window.MutationObserver(this.onDomMutations);
   this.domObserverConfig = { subtree: true, characterData: true };
   this.skipNextObservation = false;
+
+  // Attach key commander
+  this.commander = new Commander(this);
 
   // HACK: we need to listen to mousup on document
   // to catch events outside the surface
@@ -84,6 +88,7 @@ Surface.Prototype = function() {
 
     if (this.isEditable()) {
       // Keyboard Events
+      this.commander.attach(el);
       el.on('keydown', this.onKeyDown);
       // OSX specific handling of dead-keys
       if (!platform.isIE) {
