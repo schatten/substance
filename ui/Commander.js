@@ -1,7 +1,6 @@
 "use strict";
 
 var oo = require('../util/oo');
-var platform = require('../util/platform');
 var keys = require('lodash/keys');
 
 /**
@@ -65,7 +64,7 @@ Commander.Prototype = function() {
     var combo = {
       key: this._isModifier(keyName) ? false : keyName,
       modifiers: this._getModifiers(e)
-    }
+    };
     this._sequencerTimer();
     var comboKey = this._getComboKey(combo);
     var actions = [];
@@ -75,7 +74,7 @@ Commander.Prototype = function() {
       if(action) action.call(this.component);
     }
 
-    if (type == 'keydown' && combo.modifiers.length == 0) {
+    if (type == 'keydown' && combo.modifiers.length === 0) {
       actions = this._sequencer(comboKey);
     } else if (type == 'keyup' && this.lastType == 'keydown' && (!combo.key || combo.modifiers.length > 0)) {
       actions = this._sequencer(this.lastKey);
@@ -130,20 +129,21 @@ Commander.Prototype = function() {
     var that = this;
     var actions = [];
     var inputLength = inputCombo.length;
-    for (var combo in this.sequences) {
-      this.sequences[combo].forEach(function(pos, index) {
-        if(combo.substring(pos, pos+inputLength) == inputCombo && (pos+inputLength <= combo.length)) {
-          if(pos+inputLength == combo.length) {
-            actions.push(combo);
-            delete that.sequences[combo][index];
-          } else {
-            that.sequences[combo][index] += inputLength;
-          }
-        } else {
+    var checkActive = function(pos, index) {
+      if(combo.substring(pos, pos+inputLength) == inputCombo && (pos+inputLength <= combo.length)) {
+        if(pos+inputLength == combo.length) {
+          actions.push(combo);
           delete that.sequences[combo][index];
+        } else {
+          that.sequences[combo][index] += inputLength;
         }
-      });
+      } else {
+        delete that.sequences[combo][index];
+      }
     };
+    for (var combo in this.sequences) {
+      this.sequences[combo].forEach(checkActive);
+    }
     var combos = keys(this.combos);
     var i = combos.length;
     while (i--) {
