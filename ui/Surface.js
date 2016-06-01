@@ -265,7 +265,7 @@ Surface.Prototype = function() {
     });
     ```
    */
-  this.transaction = function(transformation) {
+  this.transaction = function(transformation, info) {
     var documentSession = this.documentSession;
     var surfaceId = this.getId();
     var self = this;
@@ -275,7 +275,7 @@ Surface.Prototype = function() {
       tx.before.surfaceId = surfaceId;
       self._prepareArgs(args);
       return transformation(tx, args);
-    });
+    }, info);
   };
 
   this.getSelection = function() {

@@ -64,7 +64,9 @@ IsolatedNodeComponent.Prototype = function() {
       .on('keypress', this._stopPropagation)
       .on('keyup', this._stopPropagation)
       .on('compositionstart', this._stopPropagation)
-      .on('textInput', this._stopPropagation);
+      .on('textInput', this._stopPropagation)
+      .on('copy', this._stopPropagation)
+      .on('paste', this._stopPropagation);
 
     el.append(
       $$('div').addClass('se-slug').addClass('sm-before').ref('before')

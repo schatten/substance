@@ -88,13 +88,13 @@ SurfaceManager.Prototype = function() {
       var focusedSurface = this.surfaces[update.selection.surfaceId];
       _state.focusedSurface = focusedSurface;
       if (focusedSurface) {
-        focusedSurface._focus();
+        // focusedSurface._focus();
       } else if (update.selection.isCustomSelection() && inBrowser) {
         // HACK: removing DOM selection *and* blurring when having a CustomSelection
         // otherwise we will receive events on the wrong surface
         // instead of bubbling up to GlobalEventManager
-        window.getSelection().removeAllRanges();
-        window.document.activeElement.blur();
+        // window.getSelection().removeAllRanges();
+        // window.document.activeElement.blur();
       }
     }
 
@@ -195,9 +195,12 @@ SurfaceManager.Prototype = function() {
     // at the end of the update flow, make sure the surface is focused
     // and displays the right DOM selection.
     var focusedSurface = this._state.focusedSurface;
+    var sel = this.documentSession.getSelection();
     if (focusedSurface) {
-      focusedSurface.focus();
-      focusedSurface.rerenderDOMSelection();
+      // focusedSurface.focus();
+      // if (!sel.isCustomSelection()) {
+      //   focusedSurface.rerenderDOMSelection();
+      // }
     }
   };
 

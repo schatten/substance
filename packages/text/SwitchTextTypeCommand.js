@@ -69,7 +69,7 @@ SwitchTextType.Prototype = function() {
     } else if (sel.isContainerSelection()) {
       newState.disabled = true;
       newState.currentTextType = {name: 'container-selection'};
-    } else {
+    } else if (sel.isPropertySelection()) {
       var path = sel.getPath();
       var node = doc.get(path[0]);
       // There are cases where path points to an already deleted node,

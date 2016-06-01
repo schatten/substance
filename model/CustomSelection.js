@@ -5,10 +5,10 @@ var isEqual = require('lodash/isEqual');
 
 var Selection = require('./Selection');
 
-function CustomSelection(type, data, surfaceId) {
+function CustomSelection(data, surfaceId) {
   Selection.call(this);
 
-  this.type = type;
+  this.type = 'custom';
   this.data = data;
   this.surfaceId = surfaceId;
 }
@@ -48,7 +48,7 @@ CustomSelection.Prototype = function() {
 Selection.extend(CustomSelection);
 
 CustomSelection.fromJSON = function(json) {
-  return new CustomSelection(json.type, json.data || {}, json.surfaceId);
+  return new CustomSelection(json.data || {}, json.surfaceId);
 };
 
 module.exports = CustomSelection;

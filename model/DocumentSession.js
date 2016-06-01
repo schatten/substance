@@ -188,6 +188,7 @@ DocumentSession.Prototype = function() {
   };
 
   this._setSelection = function(sel) {
+    console.log('DocumentSession.setSelection', sel);
     if (!sel) {
       sel = Selection.nullSelection;
     } else {
@@ -286,7 +287,7 @@ DocumentSession.Prototype = function() {
         // TODO: calculate changes since last save
         var changes = [];
         saveHandler.saveDocument(doc, changes, function(err) {
-          
+
           this._isSaving = false;
           if (err) {
             error('Error during save');

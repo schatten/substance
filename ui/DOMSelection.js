@@ -58,10 +58,15 @@ DOMSelection.Prototype = function() {
     @param {model/Selection} sel
   */
   this.setSelection = function(sel) {
-    // console.log('### DOMSelection: setting selection', sel.toString());
+    console.log('### DOMSelection: setting selection', sel.toString());
     var wSel = window.getSelection();
     if (sel.isNull()) {
       this.clear();
+      return;
+    }
+    // Experimental: need to know more about how to deal with CustomSelections
+    // for now, we just don't update the DOM assuming that the selection is managed
+    if (sel.isCustomSelection()) {
       return;
     }
     var start = this._getDOMCoordinate(sel.start);
@@ -198,10 +203,12 @@ DOMSelection.Prototype = function() {
     Clear the DOM selection.
   */
   this.clear = function() {
+    console.log('Clearing DOM selection.');
     window.getSelection().removeAllRanges();
   };
 
   this.collapse = function(dir) {
+    console.log('Collapsing DOM selection.', dir);
     var wSel = window.getSelection();
     var wRange;
     if (wSel.rangeCount > 0) {
