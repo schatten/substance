@@ -46,7 +46,7 @@ app.get('/test-old/test.js', function (req, res, next) {
     }
   });
 });
-app.use('/test-old', express.static(__dirname + '/test'));
+app.use('/test-old', express.static(__dirname + '/test-old'));
 
 // Test suite
 app.get('/test/app.js', function (req, res, next) {
