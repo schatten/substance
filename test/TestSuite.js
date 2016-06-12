@@ -52,9 +52,13 @@ TestSuite.Prototype = function() {
       moduleSelect.append(option);
     });
     moduleSelect.on('change', this.onModuleSelect);
-    toolbar.append(moduleSelect);
+    toolbar.append(
+      $$('div').addClass('logo').append('Substance Tests'),
+      moduleSelect
+    );
 
     el.append(toolbar);
+
     var tests = $$('div').addClass('se-tests').ref('tests');
     this.props.harness.getTests().forEach(function(test) {
       var testItem = $$(TestItem, { test: test });
@@ -63,6 +67,7 @@ TestSuite.Prototype = function() {
       }
       tests.append(testItem);
     });
+
     el.append(tests);
 
     return el;
