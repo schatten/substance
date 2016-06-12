@@ -74,9 +74,7 @@ TestSuite.Prototype = function() {
   };
 
   this.didUpdate = function(oldProps, oldState) {
-    if (!isEqual(oldState, this.state)) {
-      this.runTests();
-    }
+    this.runTests();
   };
 
   this.runTests = function() {
