@@ -84,15 +84,12 @@ AnnotatedTextComponent.Prototype = function() {
         .addClass(node.anno.getTypeNames().join(' ').replace(/_/g, "-"))
         .addClass(node.isStart?"start-anchor":"end-anchor");
     }
-    var ComponentClass;
-    if (node.constructor.static.isInline) {
+    var ComponentClass = componentRegistry.get(node.type) || AnnotationComponent;
+    if (node.constructor.static.isInline &&
+        // opt-out for custom implementations
+        !ComponentClass.static.isCustom) {
+      console.log('### Using InlineNodeComponent wrapper');
       ComponentClass = InlineNodeComponent;
-    } else {
-      ComponentClass = componentRegistry.get(node.type);
-      if (!ComponentClass) {
-        // console.warn('No component registered for type %s. Using AnnotationComponent.', node.type);
-        ComponentClass = AnnotationComponent;
-      }
     }
     var el = $$(ComponentClass, { doc: doc, node: node });
     return el;
