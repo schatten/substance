@@ -88,7 +88,6 @@ AnnotatedTextComponent.Prototype = function() {
     if (node.constructor.static.isInline &&
         // opt-out for custom implementations
         !ComponentClass.static.isCustom) {
-      console.log('### Using InlineNodeComponent wrapper');
       ComponentClass = InlineNodeComponent;
     }
     var el = $$(ComponentClass, { doc: doc, node: node });
