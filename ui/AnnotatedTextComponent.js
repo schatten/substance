@@ -87,7 +87,9 @@ AnnotatedTextComponent.Prototype = function() {
     var ComponentClass = componentRegistry.get(node.type) || AnnotationComponent;
     if (node.constructor.static.isInline &&
         // opt-out for custom implementations
-        !ComponentClass.static.isCustom) {
+        !ComponentClass.static.isCustom &&
+        // also no extra wrapping if the node is already an inline node
+        !ComponentClass.prototype._isInlineNodeComponent) {
       ComponentClass = InlineNodeComponent;
     }
     var el = $$(ComponentClass, { doc: doc, node: node });
